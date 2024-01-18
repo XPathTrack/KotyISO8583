@@ -1,7 +1,7 @@
 package iso8583.constant;
 
 public interface ILengthType {
-    String DINAMYC = "DINAMYC";
+    String L_BYTES = "L";
     String STATIC = "STATIC";
-    String[] asArray = {DINAMYC, STATIC};
+    String[] asArray = {L_BYTES, STATIC};
 }

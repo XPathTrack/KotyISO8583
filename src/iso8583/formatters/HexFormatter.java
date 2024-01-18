@@ -2,24 +2,29 @@ package iso8583.formatters;
 
 public class HexFormatter {
 
-    public byte[] hexByte2DecByte(byte[] hexData, int position, int length) {
+    public byte[] hexAsciiByteToDecAsciiByte(int position, int length, byte... hexData) {
         byte[] asciiData = new byte[length];
         for (int i = 0; i < length; i++) {
             byte currentByte = hexData[position + i]; // get hex byte
+
 
         }
         return null;
     }
 
-    public byte[] hexByte2DecByte(byte[] data) {
-        return hexByte2DecByte(data, 0, data.length);
+    public byte[] hexAsciiByteToDecAsciiByte(byte... data) {
+        return hexAsciiByteToDecAsciiByte(0, data.length, data);
     }
 
-    public byte[] asciiByte2HexByte(byte[] data, int position, int length) {
+    public byte byteToHexByte(byte data) {
+        return 0;
+    }
+
+    public byte[] byteToHexByte(int position, int length, byte... data) {
         return null;
     }
 
-    public byte[] asciiByte2HexByte(byte[] data) {
-        return hexByte2DecByte(data, 0, data.length);
+    public byte[] byteToHexByte(byte... data) {
+        return byteToHexByte(0, data.length, data);
     }
 }

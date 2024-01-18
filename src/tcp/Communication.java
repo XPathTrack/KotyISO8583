@@ -55,7 +55,7 @@ public class Communication {
     private byte[] receive(Socket sc) throws IOException {
         InputStream input = sc.getInputStream();
         byte[] grossLength = input.readNBytes(2); // read data length
-        int lengthData = ToolBox.bytesBase255ToIntBase10(grossLength, 0, grossLength.length); // unpack data length
+        int lengthData = ToolBox.bytesToIntDec(0, grossLength.length, grossLength); // unpack data length
         return input.readNBytes(lengthData); // read the length obtained
     }
 

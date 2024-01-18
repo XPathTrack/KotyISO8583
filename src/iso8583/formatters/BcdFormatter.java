@@ -16,7 +16,7 @@ public class BcdFormatter {
      *             The string must only have values between '1' - '9', 'A' - 'F' or 'a' - 'f'.
      * @return a byte array representing the bcd value of the String
      */
-    public byte[] plainText2BCDByte(String data) {
+    public byte[] asciiCharToBCDByte(String data) {
         if (data == null) {
             throw new IllegalArgumentException("Input string cannot be null.");
         }
@@ -25,7 +25,7 @@ public class BcdFormatter {
         byte[] byteArray = new byte[(charArray.length + pad) >> 1]; //assign even bytes length
         for (int i = 0; i < charArray.length; i++) {
             int index = i + pad;
-            byteArray[index >> 1] |= (byte) (plainText2BCDByte(charArray[i]) << ((index & 1) == 1 ? 0 : 4)); //Position each char in its respective byte
+            byteArray[index >> 1] |= (byte) (asciiCharToBCDByte(charArray[i]) << ((index & 1) == 1 ? 0 : 4)); //Position each char in its respective byte
         }
         return byteArray;
     }
@@ -37,7 +37,7 @@ public class BcdFormatter {
      *              The char has to be a value between '1' - '9', 'A' - 'F' or 'a' - 'f'.
      * @return an integer representing the bcd value of the char
      */
-    public byte plainText2BCDByte(char value) {
+    public byte asciiCharToBCDByte(char value) {
         if (value >= '0' && value <= '9') {
             return (byte) (value - '0');
         } else if (value >= 'A' && value <= 'F') {
@@ -49,21 +49,21 @@ public class BcdFormatter {
         }
     }
 
-    public byte[] bcdByte2AsciiByte(byte[] bcdBytes, int position, int length) {
+    public byte[] bcdByteToAsciiByte(byte[] bcdBytes, int position, int length) {
         byte[] data = new byte[length << 1];
         for (int i = 0; i < length; i++) {
             byte bcdByte = bcdBytes[position + i];
-            data[(i << 1)] = (byte) (simpleBcdInt2IntAscii(bcdByte >> 4)); // top nibble in flat number converted to ascii
-            data[(i << 1) + 1] = (byte) (simpleBcdInt2IntAscii(bcdByte & 0xf)); // bottom bite in flat number converted to ascii
+            data[(i << 1)] = (byte) (simpleBcdIntToIntAscii(bcdByte >> 4 & 0x0f)); // top nibble in flat number converted to ascii
+            data[(i << 1) + 1] = (byte) (simpleBcdIntToIntAscii(bcdByte & 0xf)); // bottom bite in flat number converted to ascii
         }
         return data;
     }
 
-    public byte[] bcdByte2AsciiByte(byte[] bcdBytes) {
-        return bcdByte2AsciiByte(bcdBytes, 0, bcdBytes.length);
+    public byte[] bcdByteToAsciiByte(byte[] bcdBytes) {
+        return bcdByteToAsciiByte(bcdBytes, 0, bcdBytes.length);
     }
 
-    public byte[] bcdByte2PlainByte(byte[] bcdBytes, int position, int length) {
+    public byte[] bcdByteToDecByte(byte[] bcdBytes, int position, int length) {
         byte[] data = new byte[length];
         for (int i = position; i < length; i++) {
             byte bcdByte = bcdBytes[i];
@@ -72,11 +72,11 @@ public class BcdFormatter {
         return data;
     }
 
-    public byte[] bcdByte2PlainByte(byte[] bcdBytes) {
-        return bcdByte2PlainByte(bcdBytes, 0, bcdBytes.length);
+    public byte[] bcdByteToDecByte(byte[] bcdBytes) {
+        return bcdByteToDecByte(bcdBytes, 0, bcdBytes.length);
     }
 
-    private int simpleBcdInt2IntAscii(int value) {
+    private int simpleBcdIntToIntAscii(int value) {
         if (value < 0 || value > 15)
             throw new IllegalArgumentException("Carácter no válido para convertir a BCD: " + value);
         return value + (value < 10 ? '0' : 'A');

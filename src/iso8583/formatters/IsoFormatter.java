@@ -73,15 +73,24 @@ public class IsoFormatter {
 
         int[] fields = decodeBitmap(isoData.getBitmap());
 
+        for (int fieldN : fields) {
+            try {
+                isoData.put(fieldN, new String(decodeField(data, position, fieldFormats[fieldN - 1])));
+            } catch (IOException e) {
+                // return error
+            }
+            System.out.println("Campo " + fieldN + ": " + isoData.get(fieldN));
+        }
+
         return isoData;
     }
 
     private int[] decodeBitmap(byte[] bitmap) {
-        int[] maxData = new int[fieldNum];              // create array with the maximum number of possible fields
+        int[] maxData = new int[fieldNum];              // create array with the maximum number of fields possible
         int fieldsFound = 0;                            // number of fields found and offset
         for (int i = 0; i < bitmap.length; i++) {       // byte loop from bitmap
             byte b = bitmap[i];
-            for (int bit = 7; bit >= 0; bit-- ) {       // bytemap bit loopback
+            for (int bit = 7; bit >= 0; bit--) {        // bytemap bit loopback
                 int bitValue = 1 << bit;                // calculate bit value from bit position
                 if ((b & bitValue) != 0) {              // The bit calculated is active
                     maxData[fieldsFound] = (i * 8) + (8 - bit); // (offset) + (bit position) = # field
@@ -100,20 +109,20 @@ public class IsoFormatter {
 
     private byte[] decodeField(byte[] data, int position, IsoFieldFormat fieldFormat) throws IOException {
         int length;
-        if (ILengthType.DINAMYC.equals(fieldFormat.getLengthType())) {
-            length = ToolBox.bytesBase255ToIntBase10(data, position, 2);
+        if (ILengthType.STATIC.equals(fieldFormat.getLengthType())) {
+            length = fieldFormat.getLengthBytes();
+        } else {
+            length = ToolBox.bytesToIntDec(position, fieldFormat.getLengthType().length(), data); // position, #L?, data,
             if (length > fieldFormat.getLengthBytes())
                 throw new IOException("La longitud del campo " + fieldFormat.getId() + " -> " + length + " excede el maximo establecido -> " + fieldFormat.getLengthBytes());
             position += 2;
-        } else {
-            length = fieldFormat.getLengthBytes();
         }
         this.position += length;
 
         if (IDataType.HEX.equals(fieldFormat.getDataType())) {
-            return hexFormatter.hexByte2DecByte(data, position, length);
+            return hexFormatter.hexAsciiByteToDecAsciiByte(position, length, data);
         } else if (IDataType.BCD.equals(fieldFormat.getDataType())) {
-            return bcdFormatter.bcdByte2AsciiByte(data, position, length);
+            return bcdFormatter.bcdByteToAsciiByte(data, position, length);
         } else {
             byte[] plainData = new byte[length];
             System.arraycopy(data, position, plainData, 0, length);
@@ -156,7 +165,7 @@ public class IsoFormatter {
         }
         String[] values = grossProduct.toString().split(",");
         String lengthType = values[0];
-        if (Arrays.binarySearch(ILengthType.asArray, lengthType) == -1) {
+        if (!lengthType.matches(ILengthType.STATIC + "|" + ILengthType.L_BYTES + "+")) {
             throw new IOException("El tipo de longitud del campo " + key + " es inesperado: " + lengthType);
         }
         String dataType = values[2];
@@ -202,80 +211,80 @@ public class IsoFormatter {
             "\n" +
             "#DESCRIPTION\n" +
             "#LENGTH TYPE\n" +
-            "\t#0 = STATIC\n" +
-            "\t\t#LENGTH BYTES=DATA STATIC LENGTH\n" +
-            "\t#1 = DINAMYC\n" +
-            "\t\t#2 bytes declare the actual length of the data.\n" +
-            "\t\t#LENGTH BYTES=DATA MAX LENGTH\n" +
+            "\t#STATIC\n" +
+            "\t\t#LENGTH BYTES=STATIC LENGTH IN DATA BYTES\n" +
+            "\t#L...\n" +
+            "\t\t#The total of \"L\" indicates the bytes that are declared to specify the actual length of the data\n" +
+            "\t\t#LENGTH BYTES=DATA BYTES MAX LENGTH\n" +
             "#DATA TYPE\n" +
-            "\t#0 = ASC\n" +
-            "\t#1 = BCD\n" +
-            "\t#2 = HEX\n" +
+            "\t#ASC\n" +
+            "\t#BCD\n" +
+            "\t#HEX\n" +
             "FIELD_NUM=64\n" +
             "TPDU=STATIC,5,BCD\n" +
             "MTI=STATIC,2,ASC\n" +
             "1=STATIC,8,HEX\n" +
-            "2=DINAMYC,19,BCD\n" +
-            "3=STATIC,6,BCD\n" +
-            "4=STATIC,12,BCD\n" +
-            "5=STATIC,12,BCD\n" +
-            "6=STATIC,12,BCD\n" +
-            "7=STATIC,12,BCD\n" +
-            "8=STATIC,12,BCD\n" +
-            "9=STATIC,12,BCD\n" +
-            "10=STATIC,12,BCD\n" +
-            "11=STATIC,6,BCD\n" +
-            "12=STATIC,6,BCD\n" +
-            "13=STATIC,4,BCD\n" +
-            "14=STATIC,4,BCD\n" +
-            "15=STATIC,4,BCD\n" +
-            "16=STATIC,12,BCD\n" +
-            "17=STATIC,12,BCD\n" +
-            "18=STATIC,12,BCD\n" +
-            "19=STATIC,12,BCD\n" +
-            "20=STATIC,12,BCD\n" +
-            "21=STATIC,12,BCD\n" +
-            "22=STATIC,4,BCD\n" +
-            "23=STATIC,3,BCD\n" +
-            "24=STATIC,4,BCD\n" +
+            "2=LL,10,BCD\n" +
+            "3=STATIC,3,BCD\n" +
+            "4=STATIC,6,BCD\n" +
+            "5=STATIC,6,BCD\n" +
+            "6=STATIC,6,BCD\n" +
+            "7=STATIC,6,BCD\n" +
+            "8=STATIC,6,BCD\n" +
+            "9=STATIC,6,BCD\n" +
+            "10=STATIC,6,BCD\n" +
+            "11=STATIC,3,BCD\n" +
+            "12=STATIC,3,BCD\n" +
+            "13=STATIC,2,BCD\n" +
+            "14=STATIC,2,BCD\n" +
+            "15=STATIC,2,BCD\n" +
+            "16=STATIC,6,BCD\n" +
+            "17=STATIC,6,BCD\n" +
+            "18=STATIC,6,BCD\n" +
+            "19=STATIC,6,BCD\n" +
+            "20=STATIC,6,BCD\n" +
+            "21=STATIC,6,BCD\n" +
+            "22=STATIC,2,BCD\n" +
+            "23=STATIC,2,BCD\n" +
+            "24=STATIC,2,BCD\n" +
             "25=STATIC,2,BCD\n" +
             "26=STATIC,2,BCD\n" +
-            "27=STATIC,12,BCD\n" +
-            "28=STATIC,12,BCD\n" +
-            "29=STATIC,12,BCD\n" +
-            "30=STATIC,12,BCD\n" +
-            "31=STATIC,12,BCD\n" +
-            "32=DINAMYC,11,BCD\n" +
-            "33=STATIC,12,BCD\n" +
-            "34=STATIC,12,BCD\n" +
-            "35=DINAMYC,48,BCD\n" +
-            "36=STATIC,120,BCD\n" +
+            "27=STATIC,6,BCD\n" +
+            "28=STATIC,6,BCD\n" +
+            "29=STATIC,6,BCD\n" +
+            "30=STATIC,6,BCD\n" +
+            "31=STATIC,6,BCD\n" +
+            "32=LL,6,BCD\n" +
+            "33=STATIC,6,BCD\n" +
+            "34=STATIC,6,BCD\n" +
+            "35=L,24,BCD\n" +
+            "36=STATIC,60,BCD\n" +
             "37=STATIC,12,ASC\n" +
             "38=STATIC,6,ASC\n" +
             "39=STATIC,2,ASC\n" +
             "40=STATIC,12,ASC\n" +
             "41=STATIC,8,ASC\n" +
             "42=STATIC,15,ASC\n" +
-            "43=STATIC,12,BCD\n" +
-            "44=DINAMYC,25,BCD\n" +
-            "45=DINAMYC,76,ASC\n" +
-            "46=STATIC,12,BCD\n" +
-            "47=STATIC,12,BCD\n" +
-            "48=DINAMYC,322,HEX\n" +
+            "43=STATIC,6,BCD\n" +
+            "44=LL,13,BCD\n" +
+            "45=LL,76,ASC\n" +
+            "46=STATIC,6,BCD\n" +
+            "47=STATIC,6,BCD\n" +
+            "48=LL,322,HEX\n" +
             "49=STATIC,3,ASC\n" +
-            "50=STATIC,12,BCD\n" +
-            "51=STATIC,12,BCD\n" +
+            "50=STATIC,6,BCD\n" +
+            "51=STATIC,6,BCD\n" +
             "52=STATIC,8,HEX\n" +
-            "53=STATIC,16,BCD\n" +
-            "54=DINAMYC,120,HEX\n" +
-            "55=DINAMYC,512,HEX\n" +
-            "56=STATIC,12,BCD\n" +
-            "57=DINAMYC,512,ASC\n" +
-            "58=DINAMYC,512,HEX\n" +
-            "59=DINAMYC,512,HEX\n" +
-            "60=DINAMYC,999,ASC\n" +
-            "61=DINAMYC,999,ASC\n" +
-            "62=DINAMYC,999,HEX\n" +
-            "63=DINAMYC,512,HEX\n" +
-            "64=DINAMYC,65000,ASC";
+            "53=STATIC,8,BCD\n" +
+            "54=LL,120,HEX\n" +
+            "55=LL,512,HEX\n" +
+            "56=STATIC,6,BCD\n" +
+            "57=LL,512,ASC\n" +
+            "58=LL,512,HEX\n" +
+            "59=LL,512,HEX\n" +
+            "60=LL,999,ASC\n" +
+            "61=LL,999,ASC\n" +
+            "62=LL,999,HEX\n" +
+            "63=LL,512,HEX\n" +
+            "64=LL,65000,ASC";
 }

@@ -38,15 +38,15 @@ public class IsoData {
         return fields.length;
     }
 
-    public void put(int pos, String value) {
-        if (pos < 1 || pos > fields.length)
+    public void put(int fieldNumber, String value) {
+        if (fieldNumber < 2 || fieldNumber > fields.length)
             throw new IndexOutOfBoundsException();
-        fields[pos-1] = value;
+        fields[fieldNumber] = value;
     }
 
     public String get(int pos) {
         if (pos < 1 || pos > fields.length)
             throw new IndexOutOfBoundsException();
-        return fields[pos-1];
+        return fields[pos];
     }
 }
