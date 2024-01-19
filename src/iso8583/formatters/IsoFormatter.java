@@ -112,10 +112,11 @@ public class IsoFormatter {
         if (ILengthType.STATIC.equals(fieldFormat.getLengthType())) {
             length = fieldFormat.getLengthBytes();
         } else {
-            length = ToolBox.bytesToIntDec(position, fieldFormat.getLengthType().length(), data); // position, #L?, data,
+            int lBytes = fieldFormat.getLengthType().length();
+            length = ToolBox.bytesToIntDec(position, lBytes, data) - 48; // position, #L?, data,
             if (length > fieldFormat.getLengthBytes())
                 throw new IOException("La longitud del campo " + fieldFormat.getId() + " -> " + length + " excede el maximo establecido -> " + fieldFormat.getLengthBytes());
-            position += 2;
+            this.position = position += lBytes;
         }
         this.position += length;
 

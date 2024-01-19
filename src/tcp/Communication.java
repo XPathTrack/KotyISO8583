@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.net.Socket;
 
 import iso8583.data_class.IsoData;
+import iso8583.formatters.HexFormatter;
 import iso8583.formatters.IsoFormatter;
 import tcp.data.Client;
 import utils.TaskThread;
@@ -46,6 +47,7 @@ public class Communication {
                 communicationListener.onFinish(false);
                 return;
             }
+            System.out.println("Data: " + new HexFormatter().hexString(data));
             IsoData isoData = isoFormatter.decode(data);
 
             communicationListener.onFinish(true);

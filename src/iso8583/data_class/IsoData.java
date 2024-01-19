@@ -45,7 +45,7 @@ public class IsoData {
     }
 
     public String get(int pos) {
-        if (pos < 1 || pos > fields.length)
+        if (pos < 2 || pos > fields.length)
             throw new IndexOutOfBoundsException();
         return fields[pos];
     }
