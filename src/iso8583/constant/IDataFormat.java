@@ -1,6 +1,6 @@
 package iso8583.constant;
 
-public interface IDataType {
+public interface IDataFormat {
     String HEX = "HEX";
     String ASC = "ASC";
     String BCD = "BCD";

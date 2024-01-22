@@ -1,7 +1,8 @@
 package iso8583.formatters;
 
 import UI.MainUI;
-import iso8583.constant.IDataType;
+import iso8583.constant.IDataFormat;
+import iso8583.constant.ILengthFormat;
 import iso8583.constant.ILengthType;
 import iso8583.data_class.IsoData;
 import iso8583.data_class.IsoFieldFormat;
@@ -113,22 +114,29 @@ public class IsoFormatter {
             length = fieldFormat.getLengthBytes();
         } else {
             int lBytes = fieldFormat.getLengthType().length();
-            length = ToolBox.bytesToIntDec(position, lBytes, data) - 48; // position, #L?, data,
+            length = decodeLongBytes(position, lBytes, data); // position, #L?, data
+            if (!IDataFormat.ASC.equals(fieldFormat.getDataFormat()))
+                length = length >> 1;
             if (length > fieldFormat.getLengthBytes())
                 throw new IOException("La longitud del campo " + fieldFormat.getId() + " -> " + length + " excede el maximo establecido -> " + fieldFormat.getLengthBytes());
             this.position = position += lBytes;
         }
         this.position += length;
 
-        if (IDataType.HEX.equals(fieldFormat.getDataType())) {
+        if (IDataFormat.HEX.equals(fieldFormat.getDataFormat())) {
             return hexFormatter.hexAsciiByteToDecAsciiByte(position, length, data);
-        } else if (IDataType.BCD.equals(fieldFormat.getDataType())) {
-            return bcdFormatter.bcdByteToAsciiByte(data, position, length);
+        } else if (IDataFormat.BCD.equals(fieldFormat.getDataFormat())) {
+            return bcdFormatter.bcdByteToAsciiByte(position, length, data);
         } else {
             byte[] plainData = new byte[length];
             System.arraycopy(data, position, plainData, 0, length);
             return plainData;
         }
+    }
+
+    private int decodeLongBytes(int position, int length, byte[] rawData) {
+        byte[] bytesLongDec = bcdFormatter.bcdByteToDecByte(position, length, rawData); // bcd to decimal
+        return ToolBox.bytesToIntDec(bytesLongDec); // array bytes to int
     }
 
     public byte[] encode(IsoData data) {
@@ -149,39 +157,53 @@ public class IsoFormatter {
         fieldNum = Integer.parseInt(format.get("FIELD_NUM").toString());
         if ((fieldNum & 7) > 0) // is not a multiple of 8
             throw new IOException("La cantidad de campos especificada en FIELD_NUM es invalida: " + fieldNum);
-        bitmapFormat = new IsoFieldFormat("BITMAP", "STATIC", fieldNum >> 3, IDataType.ASC); // length / 8
-        tpduFormat = processGrossFormat(format, "TPDU");
-        mtiFormat = processGrossFormat(format, "MTI");
+        bitmapFormat = new IsoFieldFormat("BITMAP", "STATIC", "NA", fieldNum >> 3, IDataFormat.ASC); // length / 8
+        tpduFormat = processRawFormat(format, "TPDU");
+        mtiFormat = processRawFormat(format, "MTI");
         fieldFormats = new IsoFieldFormat[fieldNum];
         for (int i = 0; i < fieldNum; i++) {
-            fieldFormats[i] = processGrossFormat(format, String.valueOf(i + 1));
+            fieldFormats[i] = processRawFormat(format, String.valueOf(i + 1));
         }
     }
 
-    private IsoFieldFormat processGrossFormat(Properties format, String key) throws IOException {
-        Object grossProduct = format.get(key);
-        if (grossProduct == null) {
+    private IsoFieldFormat processRawFormat(Properties format, String key) throws IOException {
+        Object rawProduct = format.get(key);
+        // Verificar si el format bruto no está presente
+        if (rawProduct == null) {
             Arrays.fill(fieldFormats, null);
             throw new IOException("Packager incompleto. Se requiere configuracion de FIELD_NUM, TPDU, MTI y todos los campos que indique FIELD_NUM.");
         }
-        String[] values = grossProduct.toString().split(",");
-        String lengthType = values[0];
-        if (!lengthType.matches(ILengthType.STATIC + "|" + ILengthType.L_BYTES + "+")) {
-            throw new IOException("El tipo de longitud del campo " + key + " es inesperado: " + lengthType);
+        // Dividir la cadena de valores del producto bruto
+        String[] values = rawProduct.toString().split(",");
+
+        String[] lengthInfo = values[0].split("_");
+        String lengthType = lengthInfo[0];
+        String lengthFormat;
+        if (lengthInfo.length == 1) {
+            if (!ILengthType.STATIC.equals(lengthType))
+                throw new IOException("El tipo de longitud del campo " + key + " es inesperado: " + lengthType);
+            lengthFormat = "NA";
+        } else {
+            if (!lengthType.matches(ILengthType.L_BYTES + "+"))
+                throw new IOException("El tipo de longitud del campo " + key + " es inesperado: " + lengthType);
+            lengthFormat = lengthInfo[1];
+            if (!Arrays.asList(ILengthFormat.asArray).contains(lengthFormat))
+                throw new IOException("El formato de longitud del campo " + key + " es inesperado: " + lengthFormat);
+
         }
         String dataType = values[2];
-        if (IDataType.HEX.equals(dataType)) {
+        if (IDataFormat.HEX.equals(dataType)) {
             if (hexFormatter == null) {
                 hexFormatter = new HexFormatter();
             }
-        } else if (IDataType.BCD.equals(dataType)) {
+        } else if (IDataFormat.BCD.equals(dataType)) {
             if (bcdFormatter == null) {
                 bcdFormatter = new BcdFormatter();
             }
-        } else if (!IDataType.ASC.equals(dataType)) {
+        } else if (!IDataFormat.ASC.equals(dataType)) {
             throw new IOException("El tipo de dato del campo " + key + " es inesperado: " + dataType);
         }
-        return new IsoFieldFormat(key, lengthType, Integer.parseInt(values[1]), dataType);
+        return new IsoFieldFormat(key, lengthType, lengthFormat, Integer.parseInt(values[1]), dataType);
     }
 
     private void writeDefaultPackager(File packagerFile) throws IOException {
@@ -225,7 +247,7 @@ public class IsoFormatter {
             "TPDU=STATIC,5,BCD\n" +
             "MTI=STATIC,2,ASC\n" +
             "1=STATIC,8,HEX\n" +
-            "2=LL,10,BCD\n" +
+            "2=LL_BCD,10,BCD\n" +
             "3=STATIC,3,BCD\n" +
             "4=STATIC,6,BCD\n" +
             "5=STATIC,6,BCD\n" +
@@ -255,10 +277,10 @@ public class IsoFormatter {
             "29=STATIC,6,BCD\n" +
             "30=STATIC,6,BCD\n" +
             "31=STATIC,6,BCD\n" +
-            "32=LL,6,BCD\n" +
+            "32=LL_BCD,6,BCD\n" +
             "33=STATIC,6,BCD\n" +
             "34=STATIC,6,BCD\n" +
-            "35=L,24,BCD\n" +
+            "35=L_BCD,24,BCD\n" +
             "36=STATIC,60,BCD\n" +
             "37=STATIC,12,ASC\n" +
             "38=STATIC,6,ASC\n" +
@@ -267,25 +289,25 @@ public class IsoFormatter {
             "41=STATIC,8,ASC\n" +
             "42=STATIC,15,ASC\n" +
             "43=STATIC,6,BCD\n" +
-            "44=LL,13,BCD\n" +
-            "45=LL,76,ASC\n" +
+            "44=LL_RAW,13,BCD\n" +
+            "45=LL_BYT,76,ASC\n" +
             "46=STATIC,6,BCD\n" +
             "47=STATIC,6,BCD\n" +
-            "48=LL,322,HEX\n" +
+            "48=LL_RAW,322,HEX\n" +
             "49=STATIC,3,ASC\n" +
             "50=STATIC,6,BCD\n" +
             "51=STATIC,6,BCD\n" +
             "52=STATIC,8,HEX\n" +
             "53=STATIC,8,BCD\n" +
-            "54=LL,120,HEX\n" +
-            "55=LL,512,HEX\n" +
+            "54=LL_RAW,120,HEX\n" +
+            "55=LL_RAW,512,HEX\n" +
             "56=STATIC,6,BCD\n" +
-            "57=LL,512,ASC\n" +
-            "58=LL,512,HEX\n" +
-            "59=LL,512,HEX\n" +
-            "60=LL,999,ASC\n" +
-            "61=LL,999,ASC\n" +
-            "62=LL,999,HEX\n" +
-            "63=LL,512,HEX\n" +
-            "64=LL,65000,ASC";
+            "57=LL_BYT,512,ASC\n" +
+            "58=LL_RAW,512,HEX\n" +
+            "59=LL_RAW,512,HEX\n" +
+            "60=LL_BYT,999,ASC\n" +
+            "61=LL_BYT,999,ASC\n" +
+            "62=LL_RAW,999,ASC\n" +
+            "63=LL_RAW,512,ASC\n" +
+            "64=LL_BYT,65000,ASC";
 }

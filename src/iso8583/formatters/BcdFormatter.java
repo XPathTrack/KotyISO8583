@@ -49,7 +49,7 @@ public class BcdFormatter {
         }
     }
 
-    public byte[] bcdByteToAsciiByte(byte[] bcdBytes, int position, int length) {
+    public byte[] bcdByteToAsciiByte(int position, int length, byte... bcdBytes) {
         byte[] data = new byte[length << 1];
         for (int i = 0; i < length; i++) {
             byte bcdByte = bcdBytes[position + i];
@@ -59,21 +59,24 @@ public class BcdFormatter {
         return data;
     }
 
-    public byte[] bcdByteToAsciiByte(byte[] bcdBytes) {
-        return bcdByteToAsciiByte(bcdBytes, 0, bcdBytes.length);
+    public byte[] bcdByteToAsciiByte(byte... bcdBytes) {
+        return bcdByteToAsciiByte(0, bcdBytes.length, bcdBytes);
     }
 
-    public byte[] bcdByteToDecByte(byte[] bcdBytes, int position, int length) {
+    public byte bcdByteToDecByte(byte bcdByte) {
+        return (byte) (((bcdByte >> 4) * 10) + (bcdByte & 0xf)); // upper nibble in flat number raised to base 10 and add the lower nibble
+    }
+
+    public byte[] bcdByteToDecByte(int position, int length, byte... bcdBytes) {
         byte[] data = new byte[length];
-        for (int i = position; i < length; i++) {
-            byte bcdByte = bcdBytes[i];
-            data[i] = (byte) (((bcdByte >> 4) * 10) + bcdByte & 0xf); // upper nibble in flat number raised to base 10 and add the lower nibble
+        for (int i = 0; i < length; i++) {
+            data[i] = bcdByteToDecByte(bcdBytes[position + i]);
         }
         return data;
     }
 
-    public byte[] bcdByteToDecByte(byte[] bcdBytes) {
-        return bcdByteToDecByte(bcdBytes, 0, bcdBytes.length);
+    public byte[] bcdByteToDecByte(byte... bcdBytes) {
+        return bcdByteToDecByte(0, bcdBytes.length, bcdBytes);
     }
 
     private int simpleBcdIntToIntAscii(int value) {
