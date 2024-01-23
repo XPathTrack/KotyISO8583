@@ -6,7 +6,7 @@ public class ToolBox {
 
     private ToolBox() {
     }
-    public static int bytesToIntDec(int position, int length, byte... bytes) {
+    public static int bytesToInt(int position, int length, byte... bytes) {
         ByteBuffer buffer = ByteBuffer.allocate(4); // Init buffer with the size in bytes of an int
         buffer.position(4 - length); // left padding for useless bytes
         for (int i = 0; i < length; i++) {
@@ -16,8 +16,8 @@ public class ToolBox {
         return buffer.getInt();
     }
 
-    public static int bytesToIntDec(byte... bytes) {
-        return bytesToIntDec(0, bytes.length, bytes);
+    public static int bytesToInt(byte... bytes) {
+        return bytesToInt(0, bytes.length, bytes);
     }
 
 }

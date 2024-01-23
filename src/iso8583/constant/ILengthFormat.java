@@ -1,8 +1,8 @@
 package iso8583.constant;
 
 public interface ILengthFormat {
-    String RAW = "RAW";
+    String ASC = "ASC";
     String BCD = "BCD";
     String BYT = "BYT";
-    String[] asArray = {RAW, BCD, BYT};
+    String[] asArray = {ASC, BCD, BYT};
 }

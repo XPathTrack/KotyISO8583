@@ -48,7 +48,10 @@ public class Communication {
                 return;
             }
             System.out.println("Data: " + new HexFormatter().hexString(data));
-            IsoData isoData = isoFormatter.decode(data);
+            try {
+                IsoData isoData = isoFormatter.decode(data);
+            } catch (IOException ignored) {
+            }
 
             communicationListener.onFinish(true);
         });
@@ -57,7 +60,7 @@ public class Communication {
     private byte[] receive(Socket sc) throws IOException {
         InputStream input = sc.getInputStream();
         byte[] grossLength = input.readNBytes(2); // read data length
-        int lengthData = ToolBox.bytesToIntDec(0, grossLength.length, grossLength); // unpack data length
+        int lengthData = ToolBox.bytesToInt(0, grossLength.length, grossLength); // unpack data length
         return input.readNBytes(lengthData); // read the length obtained
     }
 
