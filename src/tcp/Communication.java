@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.net.Socket;
 
 import iso8583.data_class.IsoData;
+import iso8583.exceptions.Iso8583InvalidFormatException;
 import iso8583.formatters.HexFormatter;
 import iso8583.formatters.IsoFormatter;
 import tcp.data.Client;
@@ -30,10 +31,10 @@ public class Communication {
         return Instance;
     }
 
-    public void prepareFormatter() {
+    public void prepare() {
         try {
             isoFormatter = new IsoFormatter();
-        } catch (IOException e) {
+        } catch (Iso8583InvalidFormatException e) {
             JOptionPane.showMessageDialog(null, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -47,10 +48,12 @@ public class Communication {
                 communicationListener.onFinish(false);
                 return;
             }
-            System.out.println("Data: " + new HexFormatter().hexString(data));
+            System.out.println("ISO_RECEIVED: " + HexFormatter.toHexString(data));
             try {
                 IsoData isoData = isoFormatter.decode(data);
-            } catch (IOException ignored) {
+                System.out.println(isoData.toString());
+            } catch (IOException ioe) {
+                System.out.println(ioe.getMessage());
             }
 
             communicationListener.onFinish(true);

@@ -1,53 +1,34 @@
 package iso8583.formatters;
 
 public class HexFormatter {
-
-    public byte[] hexAsciiByteToDecAsciiByte(int position, int length, byte... hexData) {
-        byte[] asciiData = new byte[length];
-        for (int i = 0; i < length; i++) {
-            byte currentByte = hexData[position + i]; // get hex byte
-
-
-        }
-        return null;
-    }
-
-    public static final String[] hexStrings;
-    static String clase = "ISOUtil.java";
+    /**
+     * Non instantiable class
+     */
+    private HexFormatter() {}
+    private static final String[] hexStrings;
 
     static {
         hexStrings = new String[256];
         for (int i = 0; i < 256; i++) {
-            StringBuilder d = new StringBuilder(2);
-            char ch = Character.forDigit((byte) i >> 4 & 0x0F, 16);
-            d.append(Character.toUpperCase(ch));
-            ch = Character.forDigit((byte) i & 0x0F, 16);
-            d.append(Character.toUpperCase(ch));
-            hexStrings[i] = d.toString();
+            char[] hexChar = new char[2];
+            hexChar[0] = Character.toUpperCase(Character.forDigit((byte) i >> 4 & 0x0F, 16));//upperNibble
+            hexChar[1] = Character.toUpperCase(Character.forDigit((byte) i & 0x0F, 16));//lowerNibble
+            hexStrings[i] = new String(hexChar);
         }
     }
 
-    public String hexString(byte[] b) {
-        StringBuilder d = new StringBuilder(b.length * 2);
-        for (byte aB : b) {
-            d.append(hexStrings[(int) aB & 0xFF]);
+    public static String toHexString(byte decimalByte) {
+        return hexStrings[decimalByte & 0xFF];
+    }
+
+    public static String toHexString(byte[] bytes) {
+        return toHexString(bytes, new StringBuilder(bytes.length * 2));
+    }
+
+    public static String toHexString(byte[] bytes, StringBuilder builder) {
+        for (byte e : bytes) {
+            builder.append(toHexString(e));
         }
-        return d.toString();
-    }
-
-    public byte[] hexAsciiByteToDecAsciiByte(byte... data) {
-        return hexAsciiByteToDecAsciiByte(0, data.length, data);
-    }
-
-    public byte byteToHexByte(byte data) {
-        return 0;
-    }
-
-    public byte[] byteToHexByte(int position, int length, byte... data) {
-        return null;
-    }
-
-    public byte[] byteToHexByte(byte... data) {
-        return byteToHexByte(0, data.length, data);
+        return builder.toString();
     }
 }

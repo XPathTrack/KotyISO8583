@@ -29,8 +29,6 @@ public class Server implements Closeable {
         consumeRunnable = () -> {
             Set<String> clientIps = clients.keySet();
             for (String clientIp : clientIps) {
-                Communication.getInstance().prepareFormatter(); // fixear
-
                 Communication.getInstance().receive(clients.get(clientIp), (boolean success) -> {
                     try {
                         if (success) {
@@ -56,6 +54,7 @@ public class Server implements Closeable {
         if (run && connectClients != null) {
             return;
         }
+        Communication.getInstance().prepare();//unfinish
         startClientManagersThreads();
     }
 
@@ -99,7 +98,7 @@ public class Server implements Closeable {
         connectClients.interrupt();
     }
 
-    public static interface ClientListener {
+    public interface ClientListener {
 
         void onNewClient(String clientIp);
 

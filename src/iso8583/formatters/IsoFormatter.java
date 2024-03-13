@@ -1,13 +1,16 @@
 package iso8583.formatters;
 
 import UI.MainUI;
-import iso8583.constant.IDataFormat;
-import iso8583.constant.ILengthFormat;
-import iso8583.constant.ILengthType;
+import iso8583.constants.IDataFormat;
+import iso8583.constants.ILengthBytesFormat;
+import iso8583.constants.ILengthFormat;
+import iso8583.constants.ILengthType;
 import iso8583.data_class.IsoData;
 import iso8583.data_class.IsoFieldFormat;
 import iso8583.data_class.IsoFormat;
-import iso8583.loader.IsoLoader;
+import iso8583.data_class.IsoLVarFormat;
+import iso8583.exceptions.Iso8583InvalidFormatException;
+import iso8583.loaders.IsoLoader;
 import utils.ToolBox;
 
 import java.io.IOException;
@@ -18,12 +21,11 @@ import java.io.IOException;
 public class IsoFormatter {
     private final String IsoFormatDefaultPath = MainUI.PROGRAM_PATH + "/Packager/ISOPackager.properties";
     private final BcdFormatter bcdFormatter = new BcdFormatter();
-    private final HexFormatter hexFormatter = new HexFormatter();
-    private IsoFormat isoFormat;
+    private final IsoFormat isoFormat;
     private int position;
 
-    public IsoFormatter() throws IOException {
-        IsoLoader isoLoader = new IsoLoader(IsoFormatDefaultPath, bcdFormatter, hexFormatter);
+    public IsoFormatter() throws Iso8583InvalidFormatException {
+        IsoLoader isoLoader = new IsoLoader(IsoFormatDefaultPath);
         isoFormat = isoLoader.loadFormat();
     }
 
@@ -40,7 +42,6 @@ public class IsoFormatter {
 
         for (int fieldN : fields) {
             isoData.put(fieldN, new String(decodeField(data, position, isoFormat.getFieldFormat(fieldN))));
-            System.out.println("Campo " + fieldN + ": " + isoData.get(fieldN));
         }
 
         return isoData;
@@ -70,40 +71,39 @@ public class IsoFormatter {
 
     private byte[] decodeField(byte[] data, int position, IsoFieldFormat fieldFormat) throws IOException {
         int length;
-        if (ILengthType.STATIC.equals(fieldFormat.getLengthType())) {
-            length = fieldFormat.getLengthBytes();
+        if (ILengthType.STATIC.equals(fieldFormat.getlVarFormat().getType())) {
+            length = fieldFormat.getlVarFormat().getlBytes();
         } else {
-            int lBytes = fieldFormat.getLengthType().length();
-            length = decodeLengthBytes(position, lBytes, data, fieldFormat.getLengthFormat()); // position, #L?, data
-            if (length > fieldFormat.getLengthBytes())
-                throw new IOException("La longitud del campo " + fieldFormat.getId() + " -> " + length + " excede el maximo establecido -> " + fieldFormat.getLengthBytes());
-            this.position = position += lBytes;
+            IsoLVarFormat lVarFormat = fieldFormat.getlVarFormat();
+            int lVarBytes = lVarFormat.getType().length();
+            length = decodeLVarBytes(position, lVarBytes, data, lVarFormat); // position, #L?, data
+            if (length > lVarFormat.getlBytes())
+                throw new IOException("La longitud del campo " + fieldFormat.getId() + " -> " + length
+                        + " excede el maximo establecido -> " + lVarFormat.getlBytes());
+            this.position = position += lVarBytes;
         }
         this.position += length;
 
-        if (IDataFormat.HEX.equals(fieldFormat.getDataFormat())) {
-            return hexFormatter.hexAsciiByteToDecAsciiByte(position, length, data);
-        } else if (IDataFormat.BCD.equals(fieldFormat.getDataFormat())) {
-            return bcdFormatter.bcdByteToAsciiByte(position, length, data);
-        } else {
-            byte[] plainData = new byte[length];
-            System.arraycopy(data, position, plainData, 0, length);
-            return plainData;
+        if (IDataFormat.BCD.equals(fieldFormat.getDataFormat())) {
+            return bcdFormatter.bcdToAscii(position, length, data);
+        } else { // ascii
+            byte[] asciiData = new byte[length];
+            System.arraycopy(data, position, asciiData, 0, length);
+            return asciiData;
         }
     }
 
-    private int decodeLengthBytes(int position, int length, byte[] rawData, String format) {
-        switch (format) {
-            case ILengthFormat.ASC:
-                return ToolBox.bytesToInt(position, length, rawData); // UNFINISH
-            case ILengthFormat.BYT:
-                return ToolBox.bytesToInt(position, length, rawData); // array bytes to int
-            default: // BCD
-                byte[] bytesLongDec = bcdFormatter.bcdByteToDecByte(position, length, rawData); // bcd to decimal
-                int intDec = ToolBox.bytesToInt(bytesLongDec); // array bytes to int
-                return intDec >> 1;
-        }
+    private int decodeLVarBytes(int position, int length, byte[] rawData, IsoLVarFormat format) {
+        int bytesLength;
+        if (ILengthFormat.BCD.equals(format.getDecoderFormat()))
+            bytesLength = ToolBox.decBytesToDecInt(bcdFormatter.bcdToDec(position, length, rawData));
+        else
+            bytesLength = ToolBox.decBytesToDecInt(position, length, rawData);
 
+        if (ILengthBytesFormat.DEC.equals(format.getBytesFormat()))
+            bytesLength = bytesLength >> 1;
+
+        return bytesLength;
     }
 
     public byte[] encode(IsoData data) {
@@ -113,9 +113,10 @@ public class IsoFormatter {
     }
 
     private int estimateMaxSize() {
-        int maxSize = isoFormat.getTpduFormat().getLengthBytes() + isoFormat.getMtiFormat().getLengthBytes() + isoFormat.getBitmapFormat().getLengthBytes();
+        int maxSize = isoFormat.getTpduFormat().getlVarFormat().getlBytes() + isoFormat.getMtiFormat().getlVarFormat().getlBytes()
+                + isoFormat.getBitmapFormat().getlVarFormat().getlBytes(); // tpdu lBytes + mti lBytes + bitmap lBytes
         for (IsoFieldFormat fieldFormat : isoFormat.getFieldFormats()) {
-            maxSize += fieldFormat.getLengthBytes();
+            maxSize += fieldFormat.getlVarFormat().getlBytes();
         }
         return maxSize;
     }

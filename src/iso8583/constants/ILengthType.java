@@ -1,4 +1,4 @@
-package iso8583.constant;
+package iso8583.constants;
 
 public interface ILengthType {
     String L_BYTES = "L";

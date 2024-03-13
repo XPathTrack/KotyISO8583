@@ -1,5 +1,7 @@
 package iso8583.data_class;
 
+import iso8583.formatters.HexFormatter;
+
 public class IsoData {
     private String tpdu;
     private byte[] mti;
@@ -48,5 +50,26 @@ public class IsoData {
         if (pos < 2 || pos > fields.length)
             throw new IndexOutOfBoundsException();
         return fields[pos];
+    }
+
+    @Override
+    public String toString() {
+        return toString(new StringBuilder());
+    }
+
+    public String toString(StringBuilder builder) {
+        builder.append("TPDU: ").append(tpdu).append("\n");
+        builder.append("MTI: ");
+        HexFormatter.toHexString(mti, builder);
+        builder.append("\n");
+        builder.append("BITMAP: ");
+        HexFormatter.toHexString(bitmap, builder);
+        builder.append("\n");
+        for (int i = 2; i < 64; i++) {
+            if (fields[i] == null)
+                continue;
+            builder.append("FIELD ").append(i).append(": ").append(fields[i]).append("\n");
+        }
+        return builder.toString();
     }
 }
