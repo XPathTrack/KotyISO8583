@@ -2,14 +2,21 @@ package iso8583.data_class;
 
 import iso8583.formatters.HexFormatter;
 
+import java.util.HashMap;
+
 public class IsoData {
+    private final int maxSize;
+    private final boolean request;
+    private byte[] rawData;
     private String tpdu;
     private byte[] mti;
     private byte[] bitmap;
-    private final String[] fields;
+    private final HashMap<String, String> fields = new HashMap<>();
+    private final HashMap<String, DinamicFieldsData> dFields = new HashMap<>();
 
-    public IsoData(int size) {
-        fields = new String[size];
+    public IsoData(boolean request, int maxSize) {
+        this.request = request;
+        this.maxSize = maxSize;
     }
 
     public String getTpdu() {
@@ -36,20 +43,41 @@ public class IsoData {
         this.bitmap = bitmap;
     }
 
-    public int getSize() {
-        return fields.length;
+    public int getMaxSize() {
+        return maxSize;
     }
 
-    public void put(int fieldNumber, String value) {
-        if (fieldNumber < 2 || fieldNumber > fields.length)
-            throw new IndexOutOfBoundsException();
-        fields[fieldNumber] = value;
+    public byte[] getRawData() {
+        return rawData;
     }
 
-    public String get(int pos) {
-        if (pos < 2 || pos > fields.length)
+    public void setRawData(byte[] rawData) {
+        this.rawData = rawData;
+    }
+
+    public void putField(int fieldNumber, String value) {
+        if (fieldNumber < 2 || fieldNumber > maxSize)
             throw new IndexOutOfBoundsException();
-        return fields[pos];
+        fields.put(String.valueOf(fieldNumber), value);
+    }
+
+    public String getField(int fieldNumber) {
+        if (fieldNumber < 2 || fieldNumber > maxSize)
+            throw new IndexOutOfBoundsException();
+        return fields.get(String.valueOf(fieldNumber));
+    }
+
+    public void putDField(int fieldNumber, DinamicFieldsData dField) {
+        if (fieldNumber < 2 || fieldNumber > maxSize)
+            throw new IndexOutOfBoundsException();
+        dFields.put(String.valueOf(fieldNumber), dField);
+    }
+
+    public DinamicFieldsData getDField(int fieldNumber) {
+        if (fieldNumber < 2 || fieldNumber > maxSize)
+            throw new IndexOutOfBoundsException();
+
+        return dFields.get(String.valueOf(fieldNumber));
     }
 
     @Override
@@ -58,17 +86,18 @@ public class IsoData {
     }
 
     public String toString(StringBuilder builder) {
-        builder.append("TPDU: ").append(tpdu).append("\n");
-        builder.append("MTI: ");
+        builder.append("TPDU: ").append(tpdu);
+        builder.append("\nMTI: ");
         HexFormatter.toHexString(mti, builder);
-        builder.append("\n");
-        builder.append("BITMAP: ");
+        builder.append("\nBITMAP: ");
         HexFormatter.toHexString(bitmap, builder);
-        builder.append("\n");
         for (int i = 2; i < 64; i++) {
-            if (fields[i] == null)
-                continue;
-            builder.append("FIELD ").append(i).append(": ").append(fields[i]).append("\n");
+            if (fields.containsKey(String.valueOf(i)))
+                builder.append("\nFIELD ").append(i).append(": ").append(fields.get(String.valueOf(i)));
+            else if (dFields.containsKey(String.valueOf(i))) {
+                builder.append("\n");
+                dFields.get(String.valueOf(i)).toString(builder);
+            }
         }
         return builder.toString();
     }

@@ -1,5 +1,6 @@
 package tcp;
 
+import iso8583.exceptions.Iso8583InvalidFormatException;
 import tcp.data.Client;
 import java.io.Closeable;
 import java.io.IOException;
@@ -50,11 +51,11 @@ public class Server implements Closeable {
         };
     }
 
-    public void searchClients() {
+    public void searchClients() throws Iso8583InvalidFormatException {
         if (run && connectClients != null) {
             return;
         }
-        Communication.getInstance().prepare();//unfinish
+        Communication.getInstance().prepare();
         startClientManagersThreads();
     }
 
@@ -95,7 +96,8 @@ public class Server implements Closeable {
         consumeClients.release();
         clients.clear();
         server.close();
-        connectClients.interrupt();
+        if (connectClients != null)
+            connectClients.interrupt();
     }
 
     public interface ClientListener {

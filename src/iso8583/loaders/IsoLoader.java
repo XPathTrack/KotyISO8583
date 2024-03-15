@@ -1,9 +1,9 @@
 package iso8583.loaders;
 
-import iso8583.constants.IDataFormat;
-import iso8583.constants.ILengthBytesFormat;
-import iso8583.constants.ILengthFormat;
-import iso8583.constants.ILengthType;
+import iso8583.constants.*;
+import iso8583.constants.l_vars.ILengthBytesType;
+import iso8583.constants.l_vars.ILengthFormat;
+import iso8583.constants.l_vars.ILengthType;
 import iso8583.data_class.IsoFieldFormat;
 import iso8583.data_class.IsoFormat;
 import iso8583.data_class.IsoLVarFormat;
@@ -17,85 +17,135 @@ import java.util.Arrays;
 import java.util.Properties;
 
 public class IsoLoader {
-    private final String IsoDefaultFormat = "#FIELD ID=LENGTH TYPE, LENGTH BYTES, DATA TYPE\n" +
+    private final String IsoDefaultFormat = "#README\n" +
+            "\t#Data grouped within single quotes (') mean fixed values.\n" +
             "\n" +
-            "#DESCRIPTION\n" +
-            "#1: LENGTH TYPE\n" +
-            "\t#STATIC\n" +
-            "\t\t#LENGTH BYTES=STATIC LENGTH IN DATA BYTES\n" +
-            "\t#L...\n" +
-            "\t\t#The total of \"L\" indicates the bytes that are declared to specify the actual length of the data \n" +
-            "#2: LENGTH BYTES=DATA BYTES MAX LENGTH\n" +
-            "#3: DATA TYPE\n" +
-            "\t#ASC\n" +
-            "\t#BCD\n" +
+            "#GENERAL ELEMENTS OF THE FORMAT\n" +
+            "\t#FIELD_ID'='LENGTH_TYPE','LENGTH_BINES','DATA_TYPE\n" +
+            "\n" +
+            "#FORMAT DETAILS\n" +
+            "\t#0: FIELD_ID\n" +
+            "\t\t#String that identifies the field to which the format described after the '=' will be assigned.\n" +
+            "\t#1: LENGTH_TYPE\n" +
+            "\t\t#STATIC\n" +
+            "\t\t\t#the data will always have the same length.\n" +
+            "\t\t#L..._VARS\n" +
+            "\t\t\t#The data has a variable size and must be assigned the following format.\n" +
+            "\t\t\t#FORMAT ELEMENTS\n" +
+            "\t\t\t\t#L..._COUNT'_'FORMAT'_'LENGTH_TYPE\n" +
+            "\t\t\t#L..._COUNT\n" +
+            "\t\t\t\t#The total number of 'L' means how many bytes describe the length of the data.\n" +
+            "\t\t\t\t#EXAMPLE\n" +
+            "\t\t\t\t\t#We have an example data: 30203030.\n" +
+            "\t\t\t\t\t#L\n" +
+            "\t\t\t\t\t\t#length: 04. #data: 30203030.\n" +
+            "\t\t\t\t\t#LL\n" +
+            "\t\t\t\t\t\t#length: 0004. #data: 30203030.\n" +
+            "\t\t\t\t\t#LLL\n" +
+            "\t\t\t\t\t\t#length: 000004. #data: 30203030.\n" +
+            "\t\t\t#FORMAT\n" +
+            "\t\t\t\t#format in which the length bytes will travel.\n" +
+            "\t\t\t\t#BCD\n" +
+            "\t\t\t\t\t#Due to the nature of the BCD format, each byte can be represented up to a length of 255. Only the DECIMAL position notation will be used, the base 255 will not be included.\n" +
+            "\t\t\t\t\t#EXAMPLE.\n" +
+            "\t\t\t\t\t\t#We have to represent the length in 3 bytes and the length of the data is 17. Our result will be: 000023.\n" +
+            "\t\t\t\t#ASC\n" +
+            "\t\t\t\t\t#Each byte of length will represent one ASCII digit of the total length. Due to the format, the notation position of each byte will be DECIMAL, due to this, it simplifies understanding.\n" +
+            "\t\t\t\t\t#EXAMPLE\n" +
+            "\t\t\t\t\t\t#We have to represent the length in 3 bytes and the data length is 17. Our result will be: 004955.\n" +
+            "\t\t\t#LENGTH_TYPE\n" +
+            "\t\t\t\t#They indicate how length values should be interpreted.\n" +
+            "\t\t\t\t#BIN\n" +
+            "\t\t\t\t\t#Means that the decoded value is exactly the number of bytes used to store the length of the field.\n" +
+            "\t\t\t\t#RAW\n" +
+            "\t\t\t\t\t#It means that the value was taken before converting to bytes and will be double the actual value in bytes.\n" +
+            "\t#2: LENGTH_BINES\n" +
+            "\t\t#LENGTH_TYPE == STATIC\n" +
+            "\t\t\t#LLENGTH_BINES is the fixed length that the field data will have.\n" +
+            "\t\t#LENGTH_TYPE == L...VARS\n" +
+            "\t\t\t#LENGTH_BINES means that the length in bytes of the field is fixed.\n" +
+            "\t#3: DATA_TYPE\n" +
+            "\t\t#Indicates the format in which the field data will travel.\n" +
+            "\t\t#ASC\n" +
+            "\t\t\t#Each character will be sent in its ascii table representation.\n" +
+            "\t\t#BCD\n" +
+            "\t\t\t#Each character will be sent in its BCD representation.\n" +
+            "\t#4: DINAMIC_DATA\n" +
+            "\t\t#Indicates the type of subelements that the field stores.\n" +
+            "\t\t#NA\n" +
+            "\t\t\t#The field does not have subelements.\n" +
+            "\t\t#LTV\n" +
+            "\t\t\t#The field will have elements encoded in LTV.\n" +
+            "\t\t#TLV\n" +
+            "\t\t\t#The field will have elements encoded in TLV.\n" +
+            "\n" +
             "FIELD_NUM=64\n" +
-            "TPDU=STATIC,5,BCD\n" +
-            "MTI=STATIC,2,ASC\n" +
-            "1=STATIC,8,ASC\n" +
-            "2=L_BCD_BYT,10,BCD\n" +
-            "3=STATIC,3,BCD\n" +
-            "4=STATIC,6,BCD\n" +
-            "5=STATIC,6,BCD\n" +
-            "6=STATIC,6,BCD\n" +
-            "7=STATIC,6,BCD\n" +
-            "8=STATIC,6,BCD\n" +
-            "9=STATIC,6,BCD\n" +
-            "10=STATIC,6,BCD\n" +
-            "11=STATIC,3,BCD\n" +
-            "12=STATIC,3,BCD\n" +
-            "13=STATIC,2,BCD\n" +
-            "14=STATIC,2,BCD\n" +
-            "15=STATIC,2,BCD\n" +
-            "16=STATIC,6,BCD\n" +
-            "17=STATIC,6,BCD\n" +
-            "18=STATIC,6,BCD\n" +
-            "19=STATIC,6,BCD\n" +
-            "20=STATIC,6,BCD\n" +
-            "21=STATIC,6,BCD\n" +
-            "22=STATIC,2,BCD\n" +
-            "23=STATIC,2,BCD\n" +
-            "24=STATIC,2,BCD\n" +
-            "25=STATIC,2,BCD\n" +
-            "26=STATIC,2,BCD\n" +
-            "27=STATIC,6,BCD\n" +
-            "28=STATIC,6,BCD\n" +
-            "29=STATIC,6,BCD\n" +
-            "30=STATIC,6,BCD\n" +
-            "31=STATIC,6,BCD\n" +
-            "32=LL_BCD_BYT,6,BCD\n" +
-            "33=STATIC,6,BCD\n" +
-            "34=STATIC,6,BCD\n" +
-            "35=L_BCD_DEC,24,BCD\n" +
-            "36=STATIC,60,BCD\n" +
-            "37=STATIC,12,ASC\n" +
-            "38=STATIC,6,ASC\n" +
-            "39=STATIC,2,ASC\n" +
-            "40=STATIC,12,ASC\n" +
-            "41=STATIC,8,ASC\n" +
-            "42=STATIC,15,ASC\n" +
-            "43=STATIC,6,BCD\n" +
-            "44=LL_DEC_BYT,13,BCD\n" +
-            "45=LL_DEC_DEC,76,ASC\n" +
-            "46=STATIC,6,BCD\n" +
-            "47=STATIC,6,BCD\n" +
-            "48=LL_BCD_DEC,322,ASC\n" +
-            "49=STATIC,3,ASC\n" +
-            "50=STATIC,6,BCD\n" +
-            "51=STATIC,6,BCD\n" +
-            "52=STATIC,8,ASC\n" +
-            "53=STATIC,8,BCD\n" +
-            "54=LL_BCD_BYT,120,ASC\n" +
-            "55=LL_BCD_BYT,512,ASC\n" +
-            "56=STATIC,6,BCD\n" +
-            "57=LL_DEC_DEC,512,ASC\n" +
-            "58=LL_BCD_BYT,512,ASC\n" +
-            "59=LL_BCD_BYT,512,ASC\n" +
-            "60=LL_DEC_DEC,999,ASC\n" +
-            "61=LL_DEC_DEC,999,ASC\n" +
-            "62=LL_BCD_BYT,999,ASC\n" +
-            "63=LL_BCD_BYT,512,ASC\n" +
-            "64=LL_DEC_BYT,65000,ASC";
+            "TPDU=STATIC,5,BCD,NA\n" +
+            "MTI=STATIC,2,ASC,NA\n" +
+            "1=STATIC,8,ASC,NA\n" +
+            "2=L_BCD_RAW,10,BCD,NA\n" +
+            "3=STATIC,3,BCD,NA\n" +
+            "4=STATIC,6,BCD,NA\n" +
+            "5=STATIC,6,BCD,NA\n" +
+            "6=STATIC,6,BCD,NA\n" +
+            "7=STATIC,6,BCD,NA\n" +
+            "8=STATIC,6,BCD,NA\n" +
+            "9=STATIC,6,BCD,NA\n" +
+            "10=STATIC,6,BCD,NA\n" +
+            "11=STATIC,3,BCD,NA\n" +
+            "12=STATIC,3,BCD,NA\n" +
+            "13=STATIC,2,BCD,NA\n" +
+            "14=STATIC,2,BCD,NA\n" +
+            "15=STATIC,2,BCD,NA\n" +
+            "16=STATIC,6,BCD,NA\n" +
+            "17=STATIC,6,BCD,NA\n" +
+            "18=STATIC,6,BCD,NA\n" +
+            "19=STATIC,6,BCD,NA\n" +
+            "20=STATIC,6,BCD,NA\n" +
+            "21=STATIC,6,BCD,NA\n" +
+            "22=STATIC,2,BCD,NA\n" +
+            "23=STATIC,2,BCD,NA\n" +
+            "24=STATIC,2,BCD,NA\n" +
+            "25=STATIC,2,BCD,NA\n" +
+            "26=STATIC,2,BCD,NA\n" +
+            "27=STATIC,6,BCD,NA\n" +
+            "28=STATIC,6,BCD,NA\n" +
+            "29=STATIC,6,BCD,NA\n" +
+            "30=STATIC,6,BCD,NA\n" +
+            "31=STATIC,6,BCD,NA\n" +
+            "32=LL_BCD_BIN,6,BCD,NA\n" +
+            "33=STATIC,6,BCD,NA\n" +
+            "34=STATIC,6,BCD,NA\n" +
+            "35=L_BCD_RAW,24,BCD,NA\n" +
+            "36=STATIC,60,BCD,NA\n" +
+            "37=STATIC,12,ASC,NA\n" +
+            "38=STATIC,6,ASC,NA\n" +
+            "39=STATIC,2,ASC,NA\n" +
+            "40=STATIC,12,ASC,NA\n" +
+            "41=STATIC,8,ASC,NA\n" +
+            "42=STATIC,15,ASC,NA\n" +
+            "43=STATIC,6,BCD,NA\n" +
+            "44=LL_ASC_BIN,13,BCD,NA\n" +
+            "45=LL_ASC_RAW,76,ASC,NA\n" +
+            "46=STATIC,6,BCD,NA\n" +
+            "47=STATIC,6,BCD,NA\n" +
+            "48=LL_BCD_RAW,322,ASC,NA\n" +
+            "49=STATIC,3,ASC,NA\n" +
+            "50=STATIC,6,BCD,NA\n" +
+            "51=STATIC,6,BCD,NA\n" +
+            "52=STATIC,8,ASC,NA\n" +
+            "53=STATIC,8,BCD,NA\n" +
+            "54=LL_BCD_BIN,120,ASC,NA\n" +
+            "55=LL_BCD_BIN,512,ASC,TLV\n" +
+            "56=STATIC,6,BCD,NA\n" +
+            "57=LL_ASC_RAW,512,ASC,NA\n" +
+            "58=LL_BCD_BIN,512,ASC,NA\n" +
+            "59=LL_BCD_BIN,512,ASC,NA\n" +
+            "60=LL_ASC_RAW,999,ASC,NA\n" +
+            "61=LL_ASC_RAW,999,ASC,NA\n" +
+            "62=LL_BCD_BIN,999,ASC,NA\n" +
+            "63=LL_BCD_BIN,512,ASC,LTV\n" +
+            "64=LL_ASC_BIN,65000,ASC,NA";
     private final File formatFile;
     private final IsoFormat isoFormat = new IsoFormat();
 
@@ -164,7 +214,7 @@ public class IsoLoader {
         if ((isoFormat.getFieldNum() & 7) > 0) // is not a multiple of 8
             throw new Iso8583InvalidFormatException("La cantidad de campos especificada en FIELD_NUM es invalida: " + isoFormat.getFieldNum());
 
-        isoFormat.setBitmapFormat(new IsoFieldFormat("BITMAP", makeLVarFormat("STATIC", "NA", "NA", isoFormat.getFieldNum() >> 3), IDataFormat.ASC)); // length / 8
+        isoFormat.setBitmapFormat(new IsoFieldFormat("BITMAP", makeLVarFormat("STATIC", "NA", "NA", isoFormat.getFieldNum() >> 3), IDataFormat.ASC, "NA")); // length / 8
         isoFormat.setTpduFormat(processFormat(format, "TPDU"));
         isoFormat.setMtiFormat(processFormat(format, "MTI"));
         isoFormat.setFieldFormats(new IsoFieldFormat[isoFormat.getFieldNum()]);
@@ -191,7 +241,10 @@ public class IsoLoader {
 
         if (!Arrays.asList(IDataFormat.asArray).contains(dataType))
             throw new Iso8583InvalidFormatException("El tipo de dato del campo " + key + " es inesperado: " + dataType);
-        return new IsoFieldFormat(key, lVarFormat, dataType);
+        String dinamicData = values[3];
+        if (!Arrays.asList(IDinamicDataType.asArray).contains(dinamicData))
+            throw new Iso8583InvalidFormatException("El tipo de datos dinamicos del campo " + key + " es inesperado: " + dinamicData);
+        return new IsoFieldFormat(key, lVarFormat, dataType, dinamicData);
     }
 
     private IsoLVarFormat processLVarFormat(String key, String rawFormat, String lBytesStr) throws Iso8583InvalidFormatException {
@@ -213,7 +266,7 @@ public class IsoLoader {
                     if (!Arrays.asList(ILengthFormat.asArray).contains(decoderFormat))
                         throw new Iso8583InvalidFormatException("El formato de longitud del campo " + key + " es inesperado: " + decoderFormat);
                     bytesFormat = lInfo[2];
-                    if (!Arrays.asList(ILengthBytesFormat.asArray).contains(bytesFormat))
+                    if (!Arrays.asList(ILengthBytesType.asArray).contains(bytesFormat))
                         throw new Iso8583InvalidFormatException("El formato de los bytes dinamicos de longitud del campo " + key + " es inesperado: " + bytesFormat);
                 break;
             default:

@@ -16,7 +16,7 @@ public class BcdFormatter {
      *             The string must only have values between '1' - '9', 'A' - 'F' or 'a' - 'f'.
      * @return a byte array representing the bcd value of the String
      */
-    public byte[] asciiCharToBcdByte(String data) {
+    public byte[] strCharToBcdByte(String data) {
         if (data == null) {
             throw new IllegalArgumentException("Input string cannot be null.");
         }
@@ -25,7 +25,7 @@ public class BcdFormatter {
         byte[] byteArray = new byte[(charArray.length + pad) >> 1]; //assign even bytes length
         for (int i = 0; i < charArray.length; i++) {
             int index = i + pad;
-            byteArray[index >> 1] |= (byte) (asciiCharToBcdByte(charArray[i]) << ((index & 1) == 1 ? 0 : 4)); //Position each char in its respective byte
+            byteArray[index >> 1] |= (byte) (charToBcdByte(charArray[i]) << ((index & 1) == 1 ? 0 : 4)); //Position each char in its respective byte
         }
         return byteArray;
     }
@@ -37,7 +37,7 @@ public class BcdFormatter {
      *              The char has to be a value between '1' - '9', 'A' - 'F' or 'a' - 'f'.
      * @return an integer representing the bcd value of the char
      */
-    public byte asciiCharToBcdByte(char value) {
+    public byte charToBcdByte(char value) {
         if (value >= '0' && value <= '9') {
             return (byte) (value - '0');
         } else if (value >= 'A' && value <= 'F') {

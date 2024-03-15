@@ -1,6 +1,8 @@
 package UI;
 
 import java.awt.Component;
+
+import iso8583.exceptions.Iso8583InvalidFormatException;
 import tcp.Server;
 import tcp.Server.ClientListener;
 import java.awt.FlowLayout;
@@ -183,7 +185,13 @@ public class MainUI extends JFrame {
                 JOptionPane.showMessageDialog(this, "No se pudo crear el servidor", "Server Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            server.searchClients();
+            try {
+                server.searchClients();
+            } catch (Iso8583InvalidFormatException e) {
+                serverBtnActionPerformed(null);
+                JOptionPane.showMessageDialog(null, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
             serverBtn.setText("Stop Server");
         } else {
             try {

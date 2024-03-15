@@ -4,11 +4,13 @@ public class IsoFieldFormat {
     private final String id;
     private final IsoLVarFormat lVarFormat;
     private final String dataFormat;
+    private final String dinamicDataType;
 
-    public IsoFieldFormat(String id, IsoLVarFormat lVarFormat, String dataFormat) {
+    public IsoFieldFormat(String id, IsoLVarFormat lVarFormat, String dataFormat, String dinamicDataType) {
         this.id = id;
         this.lVarFormat = lVarFormat;
         this.dataFormat = dataFormat;
+        this.dinamicDataType = dinamicDataType;
     }
 
     public String getId() {
@@ -21,5 +23,9 @@ public class IsoFieldFormat {
 
     public String getDataFormat() {
         return dataFormat;
+    }
+
+    public String getDinamicDataType() {
+        return dinamicDataType;
     }
 }

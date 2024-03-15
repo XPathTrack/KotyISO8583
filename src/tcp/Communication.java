@@ -19,7 +19,7 @@ import javax.swing.*;
  */
 public class Communication {
 
-    private static final Communication Instance = new Communication();
+    private static final Communication instance = new Communication();
 
     private IsoFormatter isoFormatter;
     private final TaskThread taskExecutor = new TaskThread();
@@ -28,15 +28,11 @@ public class Communication {
     }
 
     public static Communication getInstance() {
-        return Instance;
+        return instance;
     }
 
-    public void prepare() {
-        try {
-            isoFormatter = new IsoFormatter();
-        } catch (Iso8583InvalidFormatException e) {
-            JOptionPane.showMessageDialog(null, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
+    public void prepare() throws Iso8583InvalidFormatException {
+        isoFormatter = new IsoFormatter();
     }
 
     public void receive(Client client, CommunicationListener communicationListener) {
@@ -51,7 +47,8 @@ public class Communication {
             System.out.println("ISO_RECEIVED: " + HexFormatter.toHexString(data));
             try {
                 IsoData isoData = isoFormatter.decode(data);
-                System.out.println(isoData.toString());
+                System.out.println("DECODED ISO -> {\n" + isoData.toString() + "\n}");
+                client.getTalkLog().add(isoData);
             } catch (IOException ioe) {
                 System.out.println(ioe.getMessage());
             }
