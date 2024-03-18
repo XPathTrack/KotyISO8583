@@ -181,21 +181,26 @@ public class IsoFormatter {
         //LENGTH
         if (ILengthType.STATIC.equals(fieldFormat.getlVarFormat().getType())) {
             if (fieldFormat.getlVarFormat().getlBytes() != bytesData.length)
-                throw new Exception("sida para ti");
+                throw new Exception("sida para ti");//unfinish
         } else {
-            encodeLVarBytes(dest, rawData, bytesData, fieldFormat.getlVarFormat());
+            encodeLVarBytes(dest, rawData.length(), bytesData.length, fieldFormat.getlVarFormat());
         }
     }
 
-    private void encodeLVarBytes(byte[] dest, int rawLength, byte[] decodedData, IsoLVarFormat lVarFormat) throws Exception {
+    private void encodeLVarBytes(byte[] dest, int rawLength, int decodedLength, IsoLVarFormat lVarFormat) throws Exception {//UNFiNISH
         byte[] dLength;
+        String typeLength = String.valueOf(ILengthBytesType.RAW.equals(lVarFormat.getBytesFormat())
+                ? rawLength : decodedLength);
         if (ILengthFormat.BCD.equals(lVarFormat.getDecoderFormat())) {
-            dLength = bcdFormatter.strCharToBcdByte(String.valueOf(rawLength));
+            dLength = bcdFormatter.strCharToBcdByte(typeLength);
+            if (dLength.length > lVarFormat.getType().length())
+                throw new Exception("cancer para ti");//unfinish
         } else {
-            dLength = ;
+            if (typeLength.length() > lVarFormat.getType().length())
+                throw new Exception("cancer para ti");//unfinish
+            dLength = typeLength.getBytes();
         }
-        if (dLength.length > lVarFormat.getType().length())
-            throw new Exception("cancer para ti");
+
         if (ToolBox.decBytesToDecInt(dLength) > lVarFormat.getlBytes())
             throw new Exception("herpes para ti");
 
