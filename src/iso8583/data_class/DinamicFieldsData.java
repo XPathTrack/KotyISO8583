@@ -6,6 +6,7 @@ import java.util.Set;
 public class DinamicFieldsData {
 
     private final String key;
+    private byte[] rawData;
     private final HashMap<String, String> fields = new HashMap<>();
 
     public DinamicFieldsData(String key) {
@@ -18,6 +19,14 @@ public class DinamicFieldsData {
 
     public String get(String key) {
         return fields.get(key);
+    }
+
+    public byte[] getRawData() {
+        return rawData;
+    }
+
+    public void setRawData(byte[] rawData) {
+        this.rawData = rawData;
     }
 
     @Override

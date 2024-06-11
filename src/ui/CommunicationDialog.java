@@ -1,4 +1,4 @@
-package UI;
+package ui;
 
 import iso8583.data_class.IsoData;
 import iso8583.formatters.HexFormatter;

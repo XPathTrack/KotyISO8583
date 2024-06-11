@@ -1,6 +1,6 @@
 package iso8583.formatters;
 
-import UI.MainUI;
+import ui.MainUI;
 import iso8583.constants.*;
 import iso8583.constants.l_vars.ILengthBytesType;
 import iso8583.constants.l_vars.ILengthFormat;
@@ -54,11 +54,18 @@ public class IsoFormatter {
             }
         }
         position = 0;
+        byte[] maxData = new byte[estimateMaxSize()];
+        try {
+            encodeField(maxData, isoData.getTpdu(), isoFormat.getTpduFormat());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return isoData;
     }
 
     private DinamicFieldsData decodeTlvField(String id, byte[] data) throws IOException {
         DinamicFieldsData dinamicData = new DinamicFieldsData(id);
+        dinamicData.setRawData(data);
         for (int i = 0; i < data.length; ) {
             //TAG
             int lengthTag = Character.toUpperCase(data[i + 1]) == 'F' ? 4 : 2;
@@ -79,6 +86,7 @@ public class IsoFormatter {
 
     private DinamicFieldsData decodeLtvField(String id, byte[] data) throws IOException {
         DinamicFieldsData dinamicData = new DinamicFieldsData(id);
+        dinamicData.setRawData(data);
         for (int i = 0; i < data.length; ) {
             //LENGTH
             int length = ToolBox.decBytesToDecInt(bcdFormatter.bcdToDec(i, 2, data));

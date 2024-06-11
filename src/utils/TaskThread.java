@@ -3,51 +3,60 @@ package utils;
 import java.util.LinkedList;
 
 /**
- *
  * @author PathTrack
  */
 public class TaskThread {
 
-    private boolean isRunning = true;
+    private static final String TAG = "TaskThread";
+    private volatile boolean isRunning = false;
+    private Thread thread;
     private final LinkedList<Runnable> taskQueue = new LinkedList<>();
 
     private final Runnable mainRunnable = () -> {
         Runnable currentTask;
         while (isRunning) {
             synchronized (taskQueue) {
-                if (taskQueue.isEmpty()) {
+                while (taskQueue.isEmpty()) {
                     try {
                         taskQueue.wait();
                     } catch (InterruptedException ex) {
-                        continue;
+                        Thread.currentThread().interrupt();
+                        return;
                     }
                 }
                 currentTask = taskQueue.pollFirst();
             }
-            currentTask.run();
+            try {
+                currentTask.run();
+            } catch (Exception e) {
+                System.out.println(TAG + "/Falló la ejecución de la tarea. -> " + e.getMessage());
+            }
         }
     };
 
     public void release() {
-        if (thread != null) {
+        synchronized (taskQueue) {
+            if (!isRunning)
+                return;
             isRunning = false;
-            synchronized (taskQueue) {
-                taskQueue.clear();
-            }
+            taskQueue.clear();
             thread.interrupt();
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                thread.interrupt();
+            }
             thread = null;
         }
     }
 
-    private Thread thread;
-
     public void addTask(Runnable runnable) {
-        if (thread == null) {
-            isRunning = true;
-            thread = new Thread(mainRunnable);
-            thread.start();
-        }
         synchronized (taskQueue) {
+            if (!isRunning) {
+                isRunning = true;
+                thread = new Thread(mainRunnable);
+                thread.start();
+            }
             taskQueue.add(runnable);
             taskQueue.notify();
         }
