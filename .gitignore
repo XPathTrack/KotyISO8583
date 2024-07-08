@@ -1,29 +1,22 @@
-### IntelliJ IDEA ###
+# Gradle
+.gradle/
+build/
+gradle/
+gradlew
+gradlew.bat
+
+# IntelliJ IDEA
+.idea/
 out/
-!**/src/main/**/out/
-!**/src/test/**/out/
+*.iml
+*.ipr
+*.iws
 
-### Eclipse ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
+# Compiled class file
+*.class
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
 
-### VS Code ###
-.vscode/
-
-### Mac OS ###
-.DS_Store
+# Windows
+Thumbs.db
