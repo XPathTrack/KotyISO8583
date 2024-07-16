@@ -41,13 +41,13 @@ public class TaskThread {
             isRunning = false;
             taskQueue.clear();
             thread.interrupt();
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                thread.interrupt();
-            }
-            thread = null;
         }
+        try {//importante
+            thread.join();
+        } catch (InterruptedException e) {
+            thread.interrupt();
+        }
+        thread = null;
     }
 
     public void addTask(Runnable runnable) {
