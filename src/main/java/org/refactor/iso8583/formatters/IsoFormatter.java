@@ -1,6 +1,6 @@
 package org.refactor.iso8583.formatters;
 
-import org.refactor.ui.MainUI;
+import org.refactor.ui.MainFrame;
 import org.refactor.iso8583.constants.*;
 import org.refactor.iso8583.constants.l_vars.ILengthBytesType;
 import org.refactor.iso8583.constants.l_vars.ILengthFormat;
@@ -16,7 +16,7 @@ import java.io.IOException;
  * @author PathTrack
  */
 public class IsoFormatter {
-    private final String IsoFormatDefaultPath = MainUI.PROGRAM_PATH + "/Packager/ISOPackager.properties";
+    private final String IsoFormatDefaultPath = MainFrame.PROGRAM_PATH + "/Packager/ISOPackager.properties";
     private final BcdFormatter bcdFormatter = new BcdFormatter();
     private final IsoFormat isoFormat;
     private int position;

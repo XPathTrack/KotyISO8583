@@ -1,6 +1,6 @@
 package org.refactor.logs;
 
-import org.refactor.ui.MainUI;
+import org.refactor.ui.MainFrame;
 import org.refactor.utils.TaskThread;
 
 import java.io.BufferedWriter;
@@ -56,7 +56,7 @@ public class Logger {
 
     private static void writeToFile(LogData log) throws Exception {
 
-        File file = new File(MainUI.PROGRAM_PATH + "/" + log.getTimeDate().substring(0,10) + EXTENSION);
+        File file = new File(MainFrame.PROGRAM_PATH + "/" + log.getTimeDate().substring(0,10) + EXTENSION);
         if (!file.exists()) {
             file.createNewFile();
         }
