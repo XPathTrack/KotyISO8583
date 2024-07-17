@@ -38,28 +38,32 @@ public class IsoFormatter {
 
         int[] fields = decodeBitmap(isoData.getBitmap());
 
-        for (int fieldN : fields) {
-            IsoFieldFormat fieldFormat = isoFormat.getFieldFormat(fieldN);
-            byte[] decodedBytes = decodeField(data, position, fieldFormat);
-            switch (fieldFormat.getDinamicDataType()) {
-                case IDinamicDataType.TLV:
-                    isoData.putDField(fieldN, decodeTlvField(fieldFormat.getId(), decodedBytes));
-                    break;
-                case IDinamicDataType.LTV:
-                    isoData.putDField(fieldN, decodeLtvField(fieldFormat.getId(), decodedBytes));
-                    break;
-                default://NA
-                    isoData.putField(fieldN, new String(decodedBytes));
-                    break;
+        try {
+            for (int fieldN : fields) {
+                IsoFieldFormat fieldFormat = isoFormat.getFieldFormat(fieldN);
+                byte[] decodedBytes = decodeField(data, position, fieldFormat);
+                switch (fieldFormat.getDinamicDataType()) {
+                    case IDinamicDataType.TLV:
+                        isoData.putDField(fieldN, decodeTlvField(fieldFormat.getId(), decodedBytes));
+                        break;
+                    case IDinamicDataType.LTV:
+                        isoData.putDField(fieldN, decodeLtvField(fieldFormat.getId(), decodedBytes));
+                        break;
+                    default://NA
+                        isoData.putField(fieldN, new String(decodedBytes));
+                        break;
+                }
             }
+        } catch (Exception e) {
         }
+
         position = 0;
-        byte[] maxData = new byte[estimateMaxSize()];
+        /*byte[] maxData = new byte[estimateMaxSize()];
         try {
             encodeField(maxData, isoData.getTpdu(), isoFormat.getTpduFormat());
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }
+        }*/
         return isoData;
     }
 

@@ -21,34 +21,10 @@ public class Server implements Closeable {
     private final ClientListener clientListener;
     private boolean run = true;
     private Thread connectClients;
-    private final TaskThread consumeClients = new TaskThread();
-    private final Runnable consumeRunnable;
 
     public Server(int port, ClientListener clientListener) throws IOException {
         server = new ServerSocket(port);
         this.clientListener = clientListener;
-        consumeRunnable = () -> {
-            Set<String> clientIps = clients.keySet();
-            for (String clientIp : clientIps) {
-                Communication.getInstance().receive(clients.get(clientIp), (boolean success) -> {
-                    try {
-                        if (success) {
-                            clientListener.onReceivedOfClient(clientIp);
-                            return;
-                        }
-                    } catch (Exception e) {
-                    }
-                    try {
-                        clients.get(clientIp).getSocket().close();
-                    } catch (IOException ignored) {
-                    }
-                    try {
-                        clientListener.onLostClient(clientIp);
-                    } catch (Exception ignored) {
-                    }
-                });
-            }
-        };
     }
 
     public void searchClients() throws Iso8583InvalidFormatException {
@@ -78,7 +54,23 @@ public class Server implements Closeable {
                         continue;
                     }
                     clients.put(clientIp, new Client(newClient));
-                    consumeClients.addTask(consumeRunnable);
+                    Communication.getInstance().receive(clients.get(clientIp), (boolean success) -> {
+                        try {
+                            if (success) {
+                                clientListener.onReceivedOfClient(clientIp);
+                                return;
+                            }
+                        } catch (Exception e) {
+                        }
+                        try {
+                            clients.get(clientIp).getSocket().close();
+                        } catch (IOException ignored) {
+                        }
+                        try {
+                            clientListener.onLostClient(clientIp);
+                        } catch (Exception ignored) {
+                        }
+                    });
                 } catch (IOException ex) {
                 }
             }
@@ -93,7 +85,7 @@ public class Server implements Closeable {
     @Override
     public void close() throws IOException {
         run = false;
-        consumeClients.release();
+        Communication.getInstance().release();
         clients.clear();
         server.close();
         if (connectClients != null)

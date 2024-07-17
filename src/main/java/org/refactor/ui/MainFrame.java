@@ -55,6 +55,7 @@ public class MainFrame extends JFrame {
             dataPanel.add(btn);
             dataPanel.validate();
             dataPanel.repaint();*/
+            System.out.println("onNewClient");
         }
 
         @Override
@@ -62,6 +63,7 @@ public class MainFrame extends JFrame {
             /*searchComponentByName(dataPanel, clientIp).setEnabled(true);
             dataPanel.validate();
             dataPanel.repaint();*/
+            System.out.println("onReceivedOfClient");
         }
 
         @Override
@@ -69,6 +71,7 @@ public class MainFrame extends JFrame {
             /*dataPanel.remove(searchComponentByName(dataPanel, clientIp));
             dataPanel.validate();
             dataPanel.repaint();*/
+            System.out.println("onLostClient");
         }
     };
 
@@ -118,7 +121,7 @@ public class MainFrame extends JFrame {
         root.add(serverBtn);
 
         settingsBtn = new JButton(new ImageIcon(getClass().getResource("/org/refactor/images/settings_ico.png")));//unfinish
-        textDelay = new JTextArea();
+        textDelay = new JTextArea("0");
         textDelay.setBounds(295, 70, 75, 25);
         root.add(textDelay);
     }
