@@ -1,11 +1,11 @@
 package org.refactor.ui;
 
-import java.awt.Component;
+import java.awt.*;
 
 import org.refactor.iso8583.exceptions.Iso8583InvalidFormatException;
 import org.refactor.tcp.Server;
 import org.refactor.tcp.Server.ClientListener;
-import java.awt.FlowLayout;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -18,7 +18,6 @@ import javax.swing.*;
 import org.refactor.tcp.data.Client;
 
 /**
- *
  * @author PathTrack
  */
 public class MainFrame extends JFrame {
@@ -83,39 +82,98 @@ public class MainFrame extends JFrame {
                 }
                 super.windowClosing(e);
             }
-
         });
     }
 
+    /**
+     * Init UI components.
+     */
     private void initUI() {
         initFrame();
-        //root jpanel
-        JPanel root = new JPanel();
-        root.setLayout(null);
+        JPanel root = buildRootPanel();
         add(root);
-        //all components
         initComponents(root);
     }
 
+    /**
+     * Init the main frame settings, including size, layout, and basic properties.
+     */
     private void initFrame() {
-        //Tamaño
-        setSize(666, 444);
-        setResizable(false);
-        //Default
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("KotyISO8583");
-        //Centrar
+        setLayout(null);
+
+        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+        setSize(screen.width / 2, screen.height / 2);
+        setResizable(false);
+
         setLocationRelativeTo(null);
     }
 
+    /**
+     * Create a root configuration panel.
+     *
+     * @return configured {@link JPanel}
+     */
+    private JPanel buildRootPanel() {
+        JPanel root = new JPanel(null);
+        root.setBounds(0, 0, getWidth(), getHeight());
+        return root;
+    }
+
+    /**
+     * Initialize the other UI components.
+     *
+     * @param root {@link JPanel} to add the components
+     */
     private void initComponents(JPanel root) {
         serverBtn = new JButton("Start");
-        serverBtn.setBounds(295, 30, 75, 25);
-        serverBtn.setFocusable(false);
+        setBounds(serverBtn, 7, 5, 50, 12);
         serverBtn.addActionListener(this::serverOnClick);
         root.add(serverBtn);
 
-        settingsBtn = new JButton(new ImageIcon(getClass().getResource("/org/refactor/images/settings_ico.png")));//unfinish
+        settingsBtn = new JButton(new ImageIcon(getClass().getResource("/org/refactor/images/settings_ico.png")));
+        setBounds(settingsBtn, 5, 8, 90, 10);
+        root.add(settingsBtn);
+    }
+
+    /**
+     * Configures the bounds of a given component within the frame using percentage-based dimensions and positioning.
+     * The component's width, height, and position are calculated as percentages of the frame's dimensions.
+     * The component is centered at the specified X and Y percentage positions.
+     *
+     * @param component     the component to configure
+     * @param widthPercent  the width of the component calculated as a percentage of the frame's width (0-100)
+     * @param heightPercent the height of the component calculated as a percentage of the frame's height (0-100)
+     * @param xPercent      the horizontal position of the component's center calculated as a percentage of the frame's width (0-100)
+     * @param yPercent      the vertical position of the component's center calculated as a percentage of the frame's height (0-100)
+     */
+    private void setBounds(Component component, int widthPercent, int heightPercent, int xPercent, int yPercent) {
+        int width = percent(getWidth(), widthPercent);
+        int height = percent(getHeight(), heightPercent);
+        int x = percent(getWidth(), xPercent);
+        int y = percent(getHeight(), yPercent);
+        component.setBounds(x - width / 2, y - height / 2, width, height);
+    }
+
+    /**
+     * Efficiently calculates a percentage of the given value.
+     * Handles any percentage range with foolproof accuracy.
+     *
+     * @param value   the original value to calculate from
+     * @param percent the percentage to apply
+     * @return the calculated percentage of the original value
+     */
+    private int percent(int value, int percent) {
+        if (percent < 1) {
+            return 0;
+        } else if (percent > 99) {
+            return value;
+        } else if (percent == 1) {
+            return value / 100;
+        } else {
+            return (value * percent) / 100;
+        }
     }
 
     private Component searchComponentByName(JPanel panel, String judgment) {
@@ -161,6 +219,10 @@ public class MainFrame extends JFrame {
      */
     public static void main(String[] args) {
         // Crear y mostrar el frame
-        SwingUtilities.invokeLater(() -> new MainFrame().setVisible(true));
+        SwingUtilities.invokeLater(() -> {
+            MainFrame mainFrame = new MainFrame();
+            mainFrame.setVisible(true);
+            mainFrame.requestFocusInWindow();
+        });
     }
 }
