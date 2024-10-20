@@ -11,8 +11,6 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.7.21")
-
     // Testing
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -21,7 +19,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("org.refactor.ui.MainUI")
+    mainClass.set("org.refactor.frame.MainUI")
 }
 
 tasks.withType<JavaCompile> {
