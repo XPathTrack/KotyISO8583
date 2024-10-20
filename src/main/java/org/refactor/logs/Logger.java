@@ -1,6 +1,6 @@
 package org.refactor.logs;
 
-import org.refactor.ui.MainFrame;
+import org.refactor.ui.main.MainFrame;
 import org.refactor.utils.TaskThread;
 
 import java.io.BufferedWriter;

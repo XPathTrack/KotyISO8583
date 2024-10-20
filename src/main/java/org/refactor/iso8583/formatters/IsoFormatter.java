@@ -1,6 +1,6 @@
 package org.refactor.iso8583.formatters;
 
-import org.refactor.ui.MainFrame;
+import org.refactor.ui.main.MainFrame;
 import org.refactor.iso8583.constants.*;
 import org.refactor.iso8583.constants.l_vars.ILengthBytesType;
 import org.refactor.iso8583.constants.l_vars.ILengthFormat;

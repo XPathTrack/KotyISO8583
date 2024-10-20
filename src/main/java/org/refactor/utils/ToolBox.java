@@ -34,4 +34,24 @@ public class ToolBox {
     public static int decBytesToDecInt(byte... bytes) {
         return decBytesToDecInt(0, bytes.length, bytes);
     }
+
+    /**
+     * Efficiently calculates a percentage of the given value.
+     * Handles any percentage range with foolproof accuracy.
+     *
+     * @param value   the original value to calculate from
+     * @param percent the percentage to apply
+     * @return the calculated percentage of the original value
+     */
+    public static int percent(int value, int percent) {
+        if (percent < 1) {
+            return 0;
+        } else if (percent == 100) {
+            return value;
+        } else if (percent == 1) {
+            return value / 100;
+        } else {
+            return (value * percent) / 100;
+        }
+    }
 }

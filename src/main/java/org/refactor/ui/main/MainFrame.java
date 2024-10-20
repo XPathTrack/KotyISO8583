@@ -1,11 +1,15 @@
-package org.refactor.ui;
-
-import java.awt.*;
+package org.refactor.ui.main;
 
 import org.refactor.iso8583.exceptions.Iso8583InvalidFormatException;
 import org.refactor.tcp.Server;
 import org.refactor.tcp.Server.ClientListener;
+import org.refactor.tcp.data.Client;
+import org.refactor.ui.CommunicationDialog;
+import org.refactor.ui.layout_managers.percent_layout.PercentData;
+import org.refactor.ui.layout_managers.percent_layout.PercentLayout;
 
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -13,9 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import javax.swing.*;
-
-import org.refactor.tcp.data.Client;
 
 /**
  * @author PathTrack
@@ -23,10 +24,12 @@ import org.refactor.tcp.data.Client;
 public class MainFrame extends JFrame {
 
     public static final String PROGRAM_PATH = URLDecoder.decode(new File(MainFrame.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParent(), StandardCharsets.UTF_8);
+    private static final Dimension FRAME_REFERENCE_DIMENSION = new Dimension(960, 540);
     private Server server;
     private JPanel dataPanel;
     private JButton serverBtn;
     private JButton settingsBtn;
+    private JPanel rootPanel;
 
     private final ClientListener clientListener = new ClientListener() {
         @Override
@@ -90,9 +93,8 @@ public class MainFrame extends JFrame {
      */
     private void initUI() {
         initFrame();
-        JPanel root = buildRootPanel();
-        add(root);
-        initComponents(root);
+        setRootPanel();
+        addComponents(rootPanel);
     }
 
     /**
@@ -101,7 +103,7 @@ public class MainFrame extends JFrame {
     private void initFrame() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("KotyISO8583");
-        setLayout(null);
+        setLayout(new PercentLayout(FRAME_REFERENCE_DIMENSION));
 
         Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
         setSize(screen.width / 2, screen.height / 2);
@@ -115,10 +117,12 @@ public class MainFrame extends JFrame {
      *
      * @return configured {@link JPanel}
      */
-    private JPanel buildRootPanel() {
-        JPanel root = new JPanel(null);
-        root.setBounds(0, 0, getWidth(), getHeight());
-        return root;
+    private void setRootPanel() {
+        rootPanel = new JPanel(new PercentLayout(FRAME_REFERENCE_DIMENSION));
+        rootPanel.setBounds(0,0,getWidth(),getHeight());
+        PercentData.Builder builder = new PercentData.Builder();
+        builder.setPercentBounds(new Rectangle(50, 50, 100, 100));
+        add(rootPanel, builder);
     }
 
     /**
@@ -126,54 +130,30 @@ public class MainFrame extends JFrame {
      *
      * @param root {@link JPanel} to add the components
      */
-    private void initComponents(JPanel root) {
+    private void addComponents(JPanel root) {
+        addServerBtn(root);
+        addSettingsBtn(root);
+    }
+
+    private void addServerBtn(JPanel root) {
         serverBtn = new JButton("Start");
-        setBounds(serverBtn, 7, 5, 50, 12);
         serverBtn.addActionListener(this::serverOnClick);
-        root.add(serverBtn);
 
+        PercentData.Builder percentBuilder = new PercentData.Builder();
+        percentBuilder.setPercentBounds(new Rectangle(50, 12, 7, 5));
+        percentBuilder.setFont(serverBtn.getFont());
+
+        root.add(serverBtn, percentBuilder);
+    }
+
+    private void addSettingsBtn(JPanel root) {
         settingsBtn = new JButton(new ImageIcon(getClass().getResource("/org/refactor/images/settings_ico.png")));
-        setBounds(settingsBtn, 5, 8, 90, 10);
-        root.add(settingsBtn);
-    }
 
-    /**
-     * Configures the bounds of a given component within the frame using percentage-based dimensions and positioning.
-     * The component's width, height, and position are calculated as percentages of the frame's dimensions.
-     * The component is centered at the specified X and Y percentage positions.
-     *
-     * @param component     the component to configure
-     * @param widthPercent  the width of the component calculated as a percentage of the frame's width (0-100)
-     * @param heightPercent the height of the component calculated as a percentage of the frame's height (0-100)
-     * @param xPercent      the horizontal position of the component's center calculated as a percentage of the frame's width (0-100)
-     * @param yPercent      the vertical position of the component's center calculated as a percentage of the frame's height (0-100)
-     */
-    private void setBounds(Component component, int widthPercent, int heightPercent, int xPercent, int yPercent) {
-        int width = percent(getWidth(), widthPercent);
-        int height = percent(getHeight(), heightPercent);
-        int x = percent(getWidth(), xPercent);
-        int y = percent(getHeight(), yPercent);
-        component.setBounds(x - width / 2, y - height / 2, width, height);
-    }
+        PercentData.Builder percentBuilder = new PercentData.Builder();
+        percentBuilder.setPercentBounds(new Rectangle(90, 10, 5, 8));
+        percentBuilder.setFont(settingsBtn.getFont());
 
-    /**
-     * Efficiently calculates a percentage of the given value.
-     * Handles any percentage range with foolproof accuracy.
-     *
-     * @param value   the original value to calculate from
-     * @param percent the percentage to apply
-     * @return the calculated percentage of the original value
-     */
-    private int percent(int value, int percent) {
-        if (percent < 1) {
-            return 0;
-        } else if (percent > 99) {
-            return value;
-        } else if (percent == 1) {
-            return value / 100;
-        } else {
-            return (value * percent) / 100;
-        }
+        root.add(settingsBtn, percentBuilder);
     }
 
     private Component searchComponentByName(JPanel panel, String judgment) {
